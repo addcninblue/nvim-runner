@@ -44,7 +44,7 @@ local function send_text(selection_type)
   end
 end
 local function run()
-  if ((runnerbufnr == nil) or (f.bufexists(runnerbufnr) == "0")) then
+  if ((runnerbufnr == nil) or (f.bufexists(runnerbufnr) == 0)) then
     do
       local _3_
       do
@@ -101,7 +101,7 @@ local function run()
   end
 end
 local function interactive()
-  if ((runnerbufnr == nil) or (f.bufexists(runnerbufnr) == "0")) then
+  if ((runnerbufnr == nil) or (f.bufexists(runnerbufnr) == 0)) then
     do
       local _10_
       do

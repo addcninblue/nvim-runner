@@ -47,7 +47,7 @@
       (set vim.o.selection sel-save))))
 
 (lambda run []
-  (if (or (= runnerbufnr nil) (= (f.bufexists runnerbufnr) "0"))
+  (if (or (= runnerbufnr nil) (= (f.bufexists runnerbufnr) 0))
     (do
       (-?> (let [filetype (vim.api.nvim_buf_get_option 0 "filetype")
                  filename (vim.fn.expand "%")
@@ -88,7 +88,7 @@
     (restore-split "belowright" runnerbufnr)))
 
 (lambda interactive []
-  (if (or (= runnerbufnr nil) (= (f.bufexists runnerbufnr) "0"))
+  (if (or (= runnerbufnr nil) (= (f.bufexists runnerbufnr) 0))
     (do
       (-?> (let [filetype (vim.api.nvim_buf_get_option 0 "filetype")
                  filename (vim.fn.expand "%")
