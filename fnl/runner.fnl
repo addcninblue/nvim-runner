@@ -1,6 +1,9 @@
 (local f vim.fn)
 (local api vim.api)
 
+(var runnerbufnr nil)
+(var termjobnr nil)
+
 (lambda restore-split [direction bufnr]
   "Opens bottom split terminal at 20% height."
   (print "Restored existing split.")
@@ -16,14 +19,41 @@
     (api.nvim_set_current_buf bufnr)
     bufnr))
 
-(lambda run []
-  (if (or (= vim.g.runnerbufnr nil) (= (f.bufexists vim.g.runnerbufnr) "0"))
+; Reference: :help g@
+(fn send-text [selection-type]
+  (if (= selection-type nil)
     (do
-      (->> (open-split "belowright")
-           (set vim.g.runnerbufnr))
+      (set vim.o.opfunc "v:lua.require'runner'.send_text")
+      "g@")
+    (let [sel-save vim.o.selection
+          reg-save (f.getreginfo "\"")
+          cb-save vim.o.clipboard
+          visual-marks-save [(f.getpos "'<") (f.getpos "'>")]
+          commands {"line" "'[V']y"
+                    "char" "`[v`]y"
+                    "block" (api.nvim_replace_termcodes "`[<c-v>`]y" true true true)}]
+      (set vim.o.clipboard "")
+      (set vim.o.selection "inclusive")
+      (vim.cmd (.. "noautocmd keepjumps normal! " (. commands selection-type)))
+      (-> (f.getreg "\"" " " true)
+          (vim.list_extend [""])
+          (#(f.chansend termjobnr $1)))
+
+      ; Restore original variables
+      (f.setreg "\"" reg-save)
+      (f.setpos "'<" (. visual-marks-save 1))
+      (f.setpos "'>" (. visual-marks-save 2))
+      (set vim.o.clipboard cb-save)
+      (set vim.o.selection sel-save))))
+
+(lambda run []
+  (if (or (= runnerbufnr nil) (= (f.bufexists runnerbufnr) "0"))
+    (do
       (-?> (let [filetype (vim.api.nvim_buf_get_option 0 "filetype")
                  filename (vim.fn.expand "%")
                  filename-no-ext (vim.fn.expand "%<")] ; TODO: fix this in future when option works
+             (->> (open-split "belowright")
+                  (set runnerbufnr))
              (if
                (= filetype "c")
                (.. "gcc -o " filename-no-ext " " filename " && ./" filename-no-ext)
@@ -52,18 +82,19 @@
                (= filetype "julia")
                (.. "julia " filename)
                "zsh")) ; Defaults to opening a terminal
-           (f.termopen))
+           (f.termopen)
+           (#(set termjobnr $1)))
       (api.nvim_command "startinsert"))
-    (restore-split "belowright" vim.g.runnerbufnr)))
+    (restore-split "belowright" runnerbufnr)))
 
 (lambda interactive []
-  (if (or (= vim.g.runnerbufnr nil) (= (f.bufexists vim.g.runnerbufnr) "0"))
+  (if (or (= runnerbufnr nil) (= (f.bufexists runnerbufnr) "0"))
     (do
-      (->> (open-split "belowright")
-           (set vim.g.runnerbufnr))
       (-?> (let [filetype (vim.api.nvim_buf_get_option 0 "filetype")
                  filename (vim.fn.expand "%")
                  filename-no-ext (vim.fn.expand "%<")] ; TODO: fix this in future when option works
+             (->> (open-split "belowright")
+                  (set runnerbufnr))
              (if (= filetype "python")
                (.. "python3 -i " filename)
                (= filetype "elixir")
@@ -77,9 +108,11 @@
                (= filetype "julia")
                (.. "julia -i " filename)
                "zsh")) ; Defaults to opening a terminal
-           (f.termopen))
+           (f.termopen)
+           (#(set termjobnr $1)))
       (api.nvim_command "startinsert"))
-    (restore-split "belowright" vim.g.runnerbufnr)))
+    (restore-split "belowright" runnerbufnr)))
 
 {:run run
- :interactive interactive}
+ :interactive interactive
+ :send_text send-text}
