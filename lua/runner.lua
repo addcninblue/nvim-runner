@@ -116,7 +116,7 @@ local function interactive()
         elseif (filetype == "r") then
           _10_ = "R --no-save"
         elseif (filetype == "scheme") then
-          _10_ = ("python3 scheme -i " .. filename)
+          _10_ = ("scheme -i " .. filename)
         elseif (filetype == "lua") then
           _10_ = ("lua -i " .. filename)
         elseif (filetype == "julia") then

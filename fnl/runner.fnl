@@ -102,7 +102,7 @@
                (= filetype "r")
                (.. "R --no-save")
                (= filetype "scheme")
-               (.. "python3 scheme -i " filename)
+               (.. "scheme -i " filename)
                (= filetype "lua")
                (.. "lua -i " filename)
                (= filetype "julia")
